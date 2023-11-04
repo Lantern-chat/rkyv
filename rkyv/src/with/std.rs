@@ -323,6 +323,6 @@ where
 
 impl<D: Fallible + ?Sized> DeserializeWith<ArchivedDuration, SystemTime, D> for UnixTimestamp {
     fn deserialize_with(field: &ArchivedDuration, _: &mut D) -> Result<SystemTime, D::Error> {
-        Ok(UNIX_EPOCH + (*field).into())
+        Ok(UNIX_EPOCH.checked_add((*field).into()).unwrap())
     }
 }

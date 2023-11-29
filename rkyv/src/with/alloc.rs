@@ -422,12 +422,46 @@ impl<T: Archive> ArchiveWith<Vec<T>> for CopyOptimize {
     }
 }
 
+#[cfg(feature = "thin-vec")]
+impl<T: Archive> ArchiveWith<thin_vec::ThinVec<T>> for CopyOptimize {
+    type Archived = ArchivedVec<T::Archived>;
+    type Resolver = VecResolver;
+
+    unsafe fn resolve_with(
+        field: &thin_vec::ThinVec<T>,
+        pos: usize,
+        resolver: Self::Resolver,
+        out: *mut Self::Archived,
+    ) {
+        ArchivedVec::resolve_from_len(field.len(), pos, resolver, out);
+    }
+}
+
 impl<T, S> SerializeWith<Vec<T>, S> for CopyOptimize
 where
     T: Serialize<S>,
     S: Serializer + ?Sized,
 {
     fn serialize_with(field: &Vec<T>, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
+        use ::core::mem::size_of;
+
+        // Basic debug assert that T and T::Archived are at least the same size
+        debug_assert_eq!(size_of::<T>(), size_of::<T::Archived>());
+
+        unsafe { ArchivedVec::serialize_copy_from_slice(field.as_slice(), serializer) }
+    }
+}
+
+#[cfg(feature = "thin-vec")]
+impl<T, S> SerializeWith<thin_vec::ThinVec<T>, S> for CopyOptimize
+where
+    T: Serialize<S>,
+    S: Serializer + ?Sized,
+{
+    fn serialize_with(
+        field: &thin_vec::ThinVec<T>,
+        serializer: &mut S,
+    ) -> Result<Self::Resolver, S::Error> {
         use ::core::mem::size_of;
 
         // Basic debug assert that T and T::Archived are at least the same size
@@ -450,6 +484,32 @@ where
         debug_assert_eq!(size_of::<T>(), size_of::<T::Archived>());
 
         let mut result = Vec::with_capacity(field.len());
+        unsafe {
+            copy_nonoverlapping(field.as_ptr().cast(), result.as_mut_ptr(), field.len());
+            result.set_len(field.len());
+        }
+
+        Ok(result)
+    }
+}
+
+#[cfg(feature = "thin-vec")]
+impl<T, D> DeserializeWith<ArchivedVec<T::Archived>, thin_vec::ThinVec<T>, D> for CopyOptimize
+where
+    T: Archive,
+    T::Archived: Deserialize<T, D>,
+    D: Fallible + ?Sized,
+{
+    fn deserialize_with(
+        field: &ArchivedVec<T::Archived>,
+        _: &mut D,
+    ) -> Result<thin_vec::ThinVec<T>, D::Error> {
+        use ::core::{mem::size_of, ptr::copy_nonoverlapping};
+
+        // Basic debug assert that T and T::Archived are at least the same size
+        debug_assert_eq!(size_of::<T>(), size_of::<T::Archived>());
+
+        let mut result = thin_vec::ThinVec::with_capacity(field.len());
         unsafe {
             copy_nonoverlapping(field.as_ptr().cast(), result.as_mut_ptr(), field.len());
             result.set_len(field.len());

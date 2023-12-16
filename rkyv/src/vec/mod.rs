@@ -366,6 +366,7 @@ const _: () = {
     where
         T: ToSql,
     {
+        #[inline]
         fn to_sql(
             &self,
             ty: &Type,
@@ -377,6 +378,7 @@ const _: () = {
             <&[T] as ToSql>::to_sql(&&**self, ty, out)
         }
 
+        #[inline]
         fn accepts(ty: &Type) -> bool {
             <&[T] as ToSql>::accepts(ty)
         }

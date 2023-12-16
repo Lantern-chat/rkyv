@@ -276,6 +276,7 @@ const _: () = {
     use postgres_types::{to_sql_checked, IsNull, ToSql, Type};
 
     impl ToSql for ArchivedString {
+        #[inline]
         fn to_sql(
             &self,
             ty: &Type,
@@ -287,6 +288,7 @@ const _: () = {
             <&str as ToSql>::to_sql(&self.as_str(), ty, out)
         }
 
+        #[inline]
         fn accepts(ty: &Type) -> bool {
             <&str as ToSql>::accepts(ty)
         }

@@ -269,3 +269,28 @@ const _: () = {
         }
     }
 };
+
+#[cfg(feature = "pg")]
+const _: () = {
+    use bytes::BytesMut;
+    use postgres_types::{to_sql_checked, IsNull, ToSql, Type};
+
+    impl ToSql for ArchivedString {
+        fn to_sql(
+            &self,
+            ty: &Type,
+            out: &mut BytesMut,
+        ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>>
+        where
+            Self: Sized,
+        {
+            <&str as ToSql>::to_sql(&self.as_str(), ty, out)
+        }
+
+        fn accepts(ty: &Type) -> bool {
+            <&str as ToSql>::accepts(ty)
+        }
+
+        to_sql_checked!();
+    }
+};

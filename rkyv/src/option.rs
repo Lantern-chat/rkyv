@@ -17,9 +17,9 @@ use core::{
 #[repr(u8)]
 pub enum ArchivedOption<T> {
     /// No value
-    None,
+    None = 0,
     /// Some value `T`
-    Some(T),
+    Some(T) = 1,
 }
 
 impl<T> ArchivedOption<T> {

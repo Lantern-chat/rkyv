@@ -13,9 +13,9 @@ use core::{
 #[repr(u8)]
 pub enum ArchivedResult<T, E> {
     /// Contains the success value
-    Ok(T),
+    Ok(T) = 0,
     /// Contains the error value
-    Err(E),
+    Err(E) = 1,
 }
 
 impl<T, E> ArchivedResult<T, E> {

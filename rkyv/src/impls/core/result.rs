@@ -4,8 +4,8 @@ use core::{hint::unreachable_unchecked, ptr};
 #[allow(dead_code)]
 #[repr(u8)]
 enum ArchivedResultTag {
-    Ok,
-    Err,
+    Ok = 0,
+    Err = 1,
 }
 
 #[repr(C)]

@@ -14,12 +14,7 @@ where
     type Resolver = VecResolver;
 
     #[inline]
-    unsafe fn resolve(
-        &self,
-        pos: usize,
-        resolver: Self::Resolver,
-        out: *mut Self::Archived,
-    ) {
+    unsafe fn resolve(&self, pos: usize, resolver: Self::Resolver, out: *mut Self::Archived) {
         ArchivedVec::resolve_from_slice(self.as_slice(), pos, resolver, out);
     }
 }
@@ -29,30 +24,51 @@ where
     T: Serialize<S>,
 {
     #[inline]
-    fn serialize(
-        &self,
-        serializer: &mut S,
-    ) -> Result<Self::Resolver, S::Error> {
+    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
         ArchivedVec::serialize_from_slice(self.as_slice(), serializer)
     }
 }
 
-impl<T, D: Fallible + ?Sized> Deserialize<ThinVec<T>, D>
-    for ArchivedVec<Archived<T>>
+impl<T, D: Fallible + ?Sized> Deserialize<ThinVec<T>, D> for ArchivedVec<Archived<T>>
 where
     T: Archive,
     Archived<T>: Deserialize<T, D>,
 {
     #[inline]
-    fn deserialize(
-        &self,
-        deserializer: &mut D,
-    ) -> Result<ThinVec<T>, D::Error> {
+    fn deserialize(&self, deserializer: &mut D) -> Result<ThinVec<T>, D::Error> {
         let mut result = ThinVec::with_capacity(self.len());
         for item in self.as_slice() {
             result.push(item.deserialize(deserializer)?);
         }
         Ok(result)
+    }
+}
+
+impl<T: PartialEq<U>, U> PartialEq<ThinVec<U>> for ArchivedVec<T> {
+    #[inline]
+    fn eq(&self, other: &ThinVec<U>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+impl<T: PartialEq<U>, U> PartialEq<ArchivedVec<U>> for ThinVec<T> {
+    #[inline]
+    fn eq(&self, other: &ArchivedVec<U>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+impl<T: PartialOrd> PartialOrd<ThinVec<T>> for ArchivedVec<T> {
+    #[inline]
+    fn partial_cmp(&self, other: &ThinVec<T>) -> Option<::core::cmp::Ordering> {
+        self.as_slice().partial_cmp(other.as_slice())
+    }
+}
+
+impl<T: PartialOrd> PartialOrd<ArchivedVec<T>> for ThinVec<T> {
+    #[inline]
+    fn partial_cmp(&self, other: &ArchivedVec<T>) -> Option<::core::cmp::Ordering> {
+        self.as_slice().partial_cmp(other.as_slice())
     }
 }
 
@@ -72,12 +88,10 @@ mod tests {
         let mut serializer = AllocSerializer::<256>::default();
         serializer.serialize_value(&value).unwrap();
         let result = serializer.into_serializer().into_inner();
-        let archived =
-            unsafe { archived_root::<ThinVec<i32>>(result.as_ref()) };
+        let archived = unsafe { archived_root::<ThinVec<i32>>(result.as_ref()) };
         assert_eq!(archived.as_slice(), &[10, 20, 40, 80]);
 
-        let deserialized: ThinVec<i32> =
-            archived.deserialize(&mut Infallible).unwrap();
+        let deserialized: ThinVec<i32> = archived.deserialize(&mut Infallible).unwrap();
         assert_eq!(value, deserialized);
     }
 }

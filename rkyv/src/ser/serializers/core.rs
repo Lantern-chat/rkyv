@@ -292,8 +292,8 @@ impl<T: DerefMut<Target = U>, U: AsMut<[u8]>> ScratchSpace for BufferScratch<T> 
 /// Allocates scratch space with a main and backup scratch.
 #[derive(Debug)]
 pub struct FallbackScratch<M, F> {
-    main: M,
-    fallback: F,
+    pub(in crate::ser::serializers) main: M,
+    pub(in crate::ser::serializers) fallback: F,
 }
 
 impl<M, F> FallbackScratch<M, F> {

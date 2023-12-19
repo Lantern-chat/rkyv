@@ -39,6 +39,18 @@ impl<A: Borrow<AlignedVec>> AlignedSerializer<A> {
     pub fn into_inner(self) -> A {
         self.inner
     }
+
+    /// Access the inner buffer
+    pub fn inner(&self) -> &A {
+        &self.inner
+    }
+}
+
+impl<A: BorrowMut<AlignedVec>> AlignedSerializer<A> {
+    /// Clears the underlying buffer
+    pub fn reset(&mut self) {
+        self.inner.borrow_mut().clear()
+    }
 }
 
 impl<A: Default> Default for AlignedSerializer<A> {
@@ -137,6 +149,11 @@ impl<const N: usize> HeapScratch<N> {
     /// Gets the memory layout of the heap-allocated space.
     pub fn layout() -> Layout {
         unsafe { Layout::from_size_align_unchecked(N, 1) }
+    }
+
+    /// Resets the scratch space to its initial state
+    pub fn clear(&mut self) {
+        self.inner.clear()
     }
 }
 
@@ -261,6 +278,12 @@ impl AllocScratch {
             allocations: Vec::new(),
         }
     }
+
+    /// Resets to initial state without deallocating
+    pub fn reset(&mut self) {
+        self.remaining = None;
+        self.allocations.clear();
+    }
 }
 
 impl Drop for AllocScratch {
@@ -374,6 +397,11 @@ impl SharedSerializeMap {
         Self {
             shared_resolvers: hash_map::HashMap::new(),
         }
+    }
+
+    /// Reset to initial state without deallocating
+    pub fn reset(&mut self) {
+        self.shared_resolvers.clear()
     }
 }
 

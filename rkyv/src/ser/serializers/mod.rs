@@ -88,6 +88,11 @@ impl<S, C, H> CompositeSerializer<S, C, H> {
         }
     }
 
+    /// Access the serializer
+    pub fn serializer(&self) -> &S {
+        &self.serializer
+    }
+
     /// Consumes the composite serializer and returns the components.
     #[inline]
     pub fn into_components(self) -> (S, C, H) {
@@ -232,3 +237,20 @@ pub type AllocSerializer<const N: usize> = CompositeSerializer<
     FallbackScratch<HeapScratch<N>, AllocScratch>,
     SharedSerializeMap,
 >;
+
+impl<const N: usize> FallbackScratch<HeapScratch<N>, AllocScratch> {
+    /// Resets to initial state
+    pub fn reset(&mut self) {
+        self.main.clear();
+        self.fallback.reset();
+    }
+}
+
+impl<const N: usize> AllocSerializer<N> {
+    /// Resets to initial state
+    pub fn reset(&mut self) {
+        self.serializer.reset();
+        self.scratch.reset();
+        self.shared.reset();
+    }
+}

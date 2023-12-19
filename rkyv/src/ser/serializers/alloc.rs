@@ -403,6 +403,14 @@ impl SharedSerializeMap {
     pub fn reset(&mut self) {
         self.shared_resolvers.clear()
     }
+
+    /// Creates a new shared registry map with initial capacity.
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            shared_resolvers: hash_map::HashMap::with_capacity(capacity),
+        }
+    }
 }
 
 impl Default for SharedSerializeMap {

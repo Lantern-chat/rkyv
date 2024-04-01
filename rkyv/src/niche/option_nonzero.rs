@@ -14,6 +14,7 @@ macro_rules! impl_archived_option_nonzero {
     ($ar:ident, $nz:ty, $ne:ty) => {
         #[doc = concat!("A niched archived `Option<", stringify!($nz), ">`")]
         #[repr(transparent)]
+        #[cfg_attr(feature = "validation", derive(bytecheck::CheckBytes))]
         pub struct $ar {
             inner: Archived<$ne>,
         }
